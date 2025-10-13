@@ -1,0 +1,15 @@
+# Node
+/node_modules
+/dist
+/.vite
+
+# Rust
+/src-tauri/target
+/src-tauri/Cargo.lock
+
+# IDE
+/.idea
+/.vscode
+
+# OS
+.DS_Store

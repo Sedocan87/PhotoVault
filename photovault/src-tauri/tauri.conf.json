@@ -1,0 +1,26 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "productName": "photovault",
+  "version": "0.1.0",
+  "identifier": "com.tauri.photovault",
+  "plugins": {},
+  "app": {
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "photovault",
+        "width": 800,
+        "height": 600
+      }
+    ]
+  }
+}

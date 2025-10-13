@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT id, path, filename, file_size, date_taken, width, height, format\n        FROM photos\n        ORDER BY date_added DESC\n        LIMIT ?1 OFFSET ?2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "path",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "filename",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "file_size",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "date_taken",
+        "ordinal": 4,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "width",
+        "ordinal": 5,
+        "type_info": "Int64"
+      },
+      {
+        "name": "height",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "format",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "6e3770eba7d2b34c652045e1d5495f6696f9debe8f74b9bd698df7895781945b"
+}
