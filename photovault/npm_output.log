@@ -1,0 +1,21 @@
+
+> photovault@1.0.0 dev
+> vite
+
+▲ [WARNING] Duplicate key "compilerOptions" in object literal [duplicate-object-key]
+
+    tsconfig.json:21:2:
+      21 │   "compilerOptions": {
+         ╵   ~~~~~~~~~~~~~~~~~
+
+  The original key "compilerOptions" is here:
+
+    tsconfig.json:2:2:
+      2 │   "compilerOptions": {
+        ╵   ~~~~~~~~~~~~~~~~~
+
+
+  VITE v7.1.9  ready in 297 ms
+
+  ➜  Local:   http://localhost:1420/
+  ➜  Network: use --host to expose

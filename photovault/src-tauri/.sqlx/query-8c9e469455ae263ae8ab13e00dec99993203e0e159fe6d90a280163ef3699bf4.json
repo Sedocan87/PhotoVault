@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO photos (path, filename, file_hash, file_size, date_taken, width, height, format)\n            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "8c9e469455ae263ae8ab13e00dec99993203e0e159fe6d90a280163ef3699bf4"
+}
