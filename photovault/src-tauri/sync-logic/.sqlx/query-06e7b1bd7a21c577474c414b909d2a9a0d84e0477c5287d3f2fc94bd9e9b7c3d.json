@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO sync_operations (id, operation_type, params, status) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "06e7b1bd7a21c577474c414b909d2a9a0d84e0477c5287d3f2fc94bd9e9b7c3d"
+}
