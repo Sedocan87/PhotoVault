@@ -3,34 +3,63 @@ pub mod db;
 pub mod models;
 pub mod services;
 
-use sqlx::SqlitePool;
+use db::manager::DatabaseManager;
+use services::config::{self, AppConfig, CONFIG_FILE_NAME};
 use std::sync::Mutex;
 use tauri::Manager;
-use commands::{get_photos, scan_library};
 
+// Import the new commands
+use commands::{get_config, set_drive_paths, verify_sync_status};
 
+// AppState now holds the config and the database manager
 pub struct AppState {
-    pub db_pool: Mutex<Option<SqlitePool>>,
+    pub config: Mutex<AppConfig>,
+    pub db_manager: Mutex<Option<DatabaseManager>>,
 }
 
 pub fn run() {
+    // Determine config path at startup
+    let config_path = config::get_app_config_dir()
+        .expect("Failed to get config dir")
+        .join(CONFIG_FILE_NAME);
+
+    // Load config at startup
+    let initial_config = tauri::async_runtime::block_on(config::load_config_from_path(&config_path))
+        .unwrap_or_default();
+
     let state = AppState {
-        db_pool: std::sync::Mutex::new(None),
+        config: Mutex::new(initial_config.clone()),
+        db_manager: Mutex::new(None),
     };
 
     tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![scan_library, get_photos])
-        .setup(|app| {
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            set_drive_paths,
+            verify_sync_status,
+        ])
+        .setup(move |app| {
             let handle = app.handle();
             let app_state = handle.state::<AppState>();
-            let app_dir = handle.path().app_data_dir().unwrap();
-            std::fs::create_dir_all(&app_dir).unwrap();
-            let db_path = app_dir.join("photovault.db");
 
-            // Initialize the database
-            let db_pool = tauri::async_runtime::block_on(db::init_db(db_path.to_str().unwrap())).unwrap();
-            *app_state.db_pool.lock().unwrap() = Some(db_pool);
+            // Initialize the DatabaseManager based on the loaded config
+            if let (Some(primary_path), Some(backup_path)) = (
+                initial_config.primary_drive,
+                initial_config.backup_drive,
+            ) {
+                let db_manager = tauri::async_runtime::block_on(async {
+                    let primary_pool = DatabaseManager::create_pool(&primary_path.join("photovault.db")).await?;
+                    let backup_pool = DatabaseManager::create_pool(&backup_path.join("photovault.db")).await?;
+                    Ok::<_, anyhow::Error>(DatabaseManager::new(primary_pool, Some(backup_pool)))
+                });
+
+                if let Ok(manager) = db_manager {
+                    *app_state.db_manager.lock().unwrap() = Some(manager);
+                } else {
+                    println!("Failed to initialize DatabaseManager on startup.");
+                }
+            }
 
             Ok(())
         })

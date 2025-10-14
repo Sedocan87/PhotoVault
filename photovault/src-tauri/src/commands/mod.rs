@@ -1,87 +1,74 @@
-use crate::models::photo::Photo;
-use crate::services::file_ops::FileOperationService;
-use crate::AppState;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use sqlx::FromRow;
-use tauri::State;
+use crate::db::manager::DatabaseManager;
+use crate::services::config::{self, AppConfig, CONFIG_FILE_NAME};
+use crate::services::sync_status::{self, SyncStatus};
+use std::path::PathBuf;
 
-#[derive(FromRow)]
-struct DbPhoto {
-    id: i64,
-    path: Option<String>,
-    filename: Option<String>,
-    file_size: Option<i64>,
-    date_taken: Option<NaiveDateTime>,
-    width: Option<i64>,
-    height: Option<i64>,
-    format: Option<String>,
-}
+// The `Result` type alias is not used in this file, but it's good practice to have it.
+#[allow(dead_code)]
+type CommandResult<T> = Result<T, String>;
 
-impl From<DbPhoto> for Photo {
-    fn from(db_photo: DbPhoto) -> Self {
-        Photo {
-            id: db_photo.id,
-            path: db_photo.path.unwrap_or_default(),
-            filename: db_photo.filename.unwrap_or_default(),
-            file_size: db_photo.file_size,
-            date_taken: db_photo.date_taken.map(|ndt| DateTime::from_naive_utc_and_offset(ndt, Utc)),
-            width: db_photo.width,
-            height: db_photo.height,
-            format: db_photo.format.unwrap_or_default(),
-        }
-    }
+#[tauri::command]
+pub async fn get_config() -> CommandResult<AppConfig> {
+    let config_dir = config::get_app_config_dir().map_err(|e| e.to_string())?;
+    let config_path = config_dir.join(CONFIG_FILE_NAME);
+    config::load_config_from_path(&config_path)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn scan_library(primary_path: String, state: State<'_, AppState>) -> Result<Vec<Photo>, String> {
-    let service = FileOperationService::new(primary_path);
-    let photos = service.scan_directory().await?;
+pub async fn set_drive_paths(primary: String, backup: String) -> CommandResult<()> {
+    println!("[set_drive_paths] Command started.");
+    let config_dir = config::get_app_config_dir().map_err(|e| e.to_string())?;
+    let config_path = config_dir.join(CONFIG_FILE_NAME);
+    println!("[set_drive_paths] Config path: {:?}", config_path);
 
-    let db_pool = state.db_pool.lock().unwrap().clone().unwrap();
-
-    for photo in &photos {
-        sqlx::query!(
-            r#"
-            INSERT OR IGNORE INTO photos (path, filename, file_hash, file_size, date_taken, width, height, format)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-            "#,
-            photo.path,
-            photo.filename,
-            "", // Placeholder for hash
-            photo.file_size,
-            photo.date_taken,
-            photo.width,
-            photo.height,
-            photo.format,
-        )
-        .execute(&db_pool)
+    let mut current_config = config::load_config_from_path(&config_path)
         .await
         .map_err(|e| e.to_string())?;
+    println!("[set_drive_paths] Config loaded.");
+
+    let primary_path = PathBuf::from(primary);
+    let backup_path = PathBuf::from(backup);
+
+    if !primary_path.is_dir() {
+        return Err("Primary path is not a valid directory.".to_string());
+    }
+    if !backup_path.is_dir() {
+        return Err("Backup path is not a valid directory.".to_string());
     }
 
-    Ok(photos)
+    current_config.primary_drive = Some(primary_path.clone());
+    current_config.backup_drive = Some(backup_path.clone());
+
+    config::save_config_to_path(&current_config, &config_path)
+        .await
+        .map_err(|e| e.to_string())?;
+    println!("[set_drive_paths] Config saved.");
+
+    println!("[set_drive_paths] Creating primary pool...");
+    let primary_pool = DatabaseManager::create_pool(&primary_path.join("photovault.db")).await.map_err(|e| e.to_string())?;
+    println!("[set_drive_paths] Primary pool created.");
+
+    println!("[set_drive_paths] Creating backup pool...");
+    let backup_pool = DatabaseManager::create_pool(&backup_path.join("photovault.db")).await.map_err(|e| e.to_string())?;
+    println!("[set_drive_paths] Backup pool created.");
+
+    let _manager = DatabaseManager::new(primary_pool, Some(backup_pool));
+    println!("[set_drive_paths] DatabaseManager created.");
+
+    Ok(())
 }
 
 #[tauri::command]
-pub async fn get_photos(limit: i64, offset: i64, state: State<'_, AppState>) -> Result<Vec<Photo>, String> {
-    let db_pool = state.db_pool.lock().unwrap().clone().unwrap();
+pub async fn verify_sync_status() -> CommandResult<SyncStatus> {
+    let config_dir = config::get_app_config_dir().map_err(|e| e.to_string())?;
+    let config_path = config_dir.join(CONFIG_FILE_NAME);
+    let config = config::load_config_from_path(&config_path)
+        .await
+        .map_err(|e| e.to_string())?;
 
-    let db_photos = sqlx::query_as!(
-        DbPhoto,
-        r#"
-        SELECT id, path, filename, file_size, date_taken, width, height, format
-        FROM photos
-        ORDER BY date_added DESC
-        LIMIT ?1 OFFSET ?2
-        "#,
-        limit,
-        offset
-    )
-    .fetch_all(&db_pool)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    let photos = db_photos.into_iter().map(Photo::from).collect();
-
-    Ok(photos)
+    sync_status::verify_sync_status(&config)
+        .await
+        .map_err(|e| e.to_string())
 }
