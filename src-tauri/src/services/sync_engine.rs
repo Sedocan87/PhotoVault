@@ -4,7 +4,7 @@ use sqlx::SqlitePool;
 use anyhow::Result;
 
 pub struct SyncEngine {
-    primary_db: SqlitePool,
+    pub primary_db: SqlitePool,
     backup_db: Option<SqlitePool>,
     operation_queue: Vec<Operation>,
 }
@@ -96,6 +96,16 @@ impl SyncEngine {
                     .execute(&mut **tx)
                     .await?;
             }
+            Operation::DeleteAlbum { album_id } => {
+                // First, delete associations in photo_albums
+                sqlx::query!("DELETE FROM photo_albums WHERE album_id = ?", album_id)
+                    .execute(&mut **tx)
+                    .await?;
+                // Then, delete the album itself
+                sqlx::query!("DELETE FROM albums WHERE id = ?", album_id)
+                    .execute(&mut **tx)
+                    .await?;
+            }
             Operation::AddToAlbum { photo_id, album_id } => {
                 sqlx::query!(
                     "INSERT INTO photo_albums (photo_id, album_id) VALUES (?, ?)",
@@ -174,6 +184,16 @@ impl SyncEngine {
             .bind(offset)
             .fetch_all(&self.primary_db)
             .await?;
+        Ok(photos)
+    }
+
+    pub async fn get_photos_by_album_id(&self, album_id: i64) -> Result<Vec<Photo>> {
+        let photos = sqlx::query_as::<_, Photo>(
+            "SELECT p.* FROM photos p JOIN photo_albums pa ON p.id = pa.photo_id WHERE pa.album_id = ?",
+        )
+        .bind(album_id)
+        .fetch_all(&self.primary_db)
+        .await?;
         Ok(photos)
     }
 

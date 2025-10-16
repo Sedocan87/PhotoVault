@@ -4,19 +4,20 @@ pub mod models;
 pub mod services;
 
 use commands::{
-    add_tag, add_to_album, create_album, delete_photos, get_config, get_photos,
-    get_sync_queue_status, move_photos, rename_photo, scan_library, set_drive_paths,
-    verify_sync_status,
+    add_tag, delete_photos, get_config, get_photos, get_sync_queue_status, move_photos,
+    rename_photo, scan_library, set_drive_paths, verify_sync_status,
 };
+use commands::album::{create_album, get_albums, add_photos_to_album, delete_album, get_photos_by_album};
 use db::manager::DatabaseManager;
 use services::config::{self, CONFIG_FILE_NAME};
 use tauri::{async_runtime::Mutex, Manager};
+use std::sync::Arc;
 
 use crate::services::sync_engine::SyncEngine;
 
 // AppState now holds the database manager
 pub struct AppState {
-    pub sync_engine: Mutex<Option<SyncEngine>>,
+    pub sync_engine: Arc<Mutex<Option<SyncEngine>>>,
 }
 
 pub fn run() {
@@ -30,7 +31,7 @@ pub fn run() {
         .unwrap_or_default();
 
     let state = AppState {
-        sync_engine: Mutex::new(None),
+        sync_engine: Arc::new(Mutex::new(None)),
     };
 
     tauri::Builder::default()
@@ -46,7 +47,10 @@ pub fn run() {
             scan_library,
             get_photos,
             create_album,
-            add_to_album,
+            add_photos_to_album,
+            get_albums,
+            delete_album,
+            get_photos_by_album,
             add_tag,
         ])
         .setup(move |app| {
