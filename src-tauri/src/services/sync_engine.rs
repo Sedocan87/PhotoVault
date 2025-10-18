@@ -1,7 +1,7 @@
 use crate::models::operation::Operation;
 use crate::models::photo::Photo;
-use sqlx::SqlitePool;
 use anyhow::Result;
+use sqlx::SqlitePool;
 
 pub struct SyncEngine {
     pub primary_db: SqlitePool,
@@ -71,9 +71,13 @@ impl SyncEngine {
             Operation::Move { from, to } => {
                 let from_str = from.to_str().unwrap();
                 let to_str = to.to_str().unwrap();
-                sqlx::query!("UPDATE photos SET path = ? WHERE path = ?", to_str, from_str)
-                    .execute(&mut **tx)
-                    .await?;
+                sqlx::query!(
+                    "UPDATE photos SET path = ? WHERE path = ?",
+                    to_str,
+                    from_str
+                )
+                .execute(&mut **tx)
+                .await?;
             }
             Operation::Delete { path } => {
                 let path_str = path.to_str().unwrap();
@@ -121,12 +125,10 @@ impl SyncEngine {
                     .await?;
                 let tag_id = match tag {
                     Some(tag) => tag.id.unwrap(),
-                    None => {
-                        sqlx::query!("INSERT INTO tags (name) VALUES (?)", tag_name)
-                            .execute(&mut **tx)
-                            .await?
-                            .last_insert_rowid()
-                    }
+                    None => sqlx::query!("INSERT INTO tags (name) VALUES (?)", tag_name)
+                        .execute(&mut **tx)
+                        .await?
+                        .last_insert_rowid(),
                 };
                 sqlx::query!(
                     "INSERT INTO photo_tags (photo_id, tag_id) VALUES (?, ?)",

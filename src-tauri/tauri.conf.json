@@ -1,6 +1,6 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run vite:dev",
     "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"

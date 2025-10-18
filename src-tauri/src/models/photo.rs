@@ -11,6 +11,7 @@ pub struct Photo {
     pub id: i64,
     pub path: String,
     pub filename: String,
+    pub file_hash: Option<String>,
     pub file_size: Option<i64>,
     pub date_taken: Option<DateTime<Utc>>,
     pub width: Option<i64>,
@@ -31,6 +32,7 @@ impl Photo {
             id: 0,
             path: path.to_str().unwrap().to_string(),
             filename: path.file_name().unwrap().to_str().unwrap().to_string(),
+            file_hash: None,
             file_size: Some(file_size),
             date_taken: None, // TODO: Read from EXIF
             width: Some(width as i64),

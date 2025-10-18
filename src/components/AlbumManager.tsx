@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Album {
   id: number;
@@ -13,18 +13,18 @@ interface AlbumManagerProps {
 
 export function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
   const queryClient = useQueryClient();
-  const [albumName, setAlbumName] = useState('');
+  const [albumName, setAlbumName] = useState("");
 
   const { data: albums, isLoading } = useQuery<Album[]>({
-    queryKey: ['albums'],
-    queryFn: () => invoke('get_albums'),
+    queryKey: ["albums"],
+    queryFn: () => invoke("get_albums"),
   });
 
   const createAlbumMutation = useMutation({
-    mutationFn: (name: string) => invoke('create_album', { name }),
+    mutationFn: (name: string) => invoke("create_album", { name }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
-      setAlbumName('');
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
+      setAlbumName("");
     },
   });
 
@@ -35,9 +35,9 @@ export function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
   };
 
   const deleteAlbumMutation = useMutation({
-    mutationFn: (albumId: number) => invoke('delete_album', { albumId }),
+    mutationFn: (albumId: number) => invoke("delete_album", { albumId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
     },
   });
 
@@ -57,7 +57,7 @@ export function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
           disabled={createAlbumMutation.isPending}
           className="bg-blue-500 text-white p-2 rounded"
         >
-          {createAlbumMutation.isPending ? 'Creating...' : 'Create Album'}
+          {createAlbumMutation.isPending ? "Creating..." : "Create Album"}
         </button>
       </div>
       {isLoading ? (
@@ -65,8 +65,14 @@ export function AlbumManager({ onAlbumSelect }: AlbumManagerProps) {
       ) : (
         <ul>
           {albums?.map((album) => (
-            <li key={album.id} className="p-2 border-b flex justify-between items-center">
-              <span onClick={() => onAlbumSelect(album.id)} className="cursor-pointer hover:underline">
+            <li
+              key={album.id}
+              className="p-2 border-b flex justify-between items-center"
+            >
+              <span
+                onClick={() => onAlbumSelect(album.id)}
+                className="cursor-pointer hover:underline"
+              >
                 {album.name}
               </span>
               <button

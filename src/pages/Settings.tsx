@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { Button } from '@/components/ui/button';
-import DriveSetupModal from '@/components/DriveSetupModal';
+import React, { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Button } from "@/components/ui/button";
+import DriveSetupModal from "@/components/DriveSetupModal";
 
 interface AppConfig {
   primary_drive: string | null;
@@ -18,7 +18,7 @@ const SettingsPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await invoke<AppConfig>('get_config');
+      const result = await invoke<AppConfig>("get_config");
       setConfig(result);
       // If this is the first run (no config), open the setup modal automatically
       if (!result.primary_drive || !result.backup_drive) {
@@ -53,19 +53,21 @@ const SettingsPage: React.FC = () => {
             <div className="space-y-2">
               <div>
                 <p className="font-medium">Primary Drive:</p>
-                <p className="text-sm text-muted-foreground">{config.primary_drive || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {config.primary_drive || "Not set"}
+                </p>
               </div>
               <div>
                 <p className="font-medium">Backup Drive:</p>
-                <p className="text-sm text-muted-foreground">{config.backup_drive || 'Not set'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {config.backup_drive || "Not set"}
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        <Button onClick={() => setIsModalOpen(true)}>
-          Configure Drives
-        </Button>
+        <Button onClick={() => setIsModalOpen(true)}>Configure Drives</Button>
       </div>
 
       <DriveSetupModal

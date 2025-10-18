@@ -1,8 +1,8 @@
+use super::MIGRATOR;
 use crate::models::photo::Photo;
 use anyhow::{Context, Result};
 use sqlx::{Pool, Sqlite};
 use std::str::FromStr;
-use super::MIGRATOR;
 
 pub struct DatabaseManager {
     pub primary_pool: Pool<Sqlite>,
@@ -49,12 +49,15 @@ impl DatabaseManager {
             .create_if_missing(true)
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal);
 
-        let pool = sqlx::SqlitePool::connect_with(options).await
+        let pool = sqlx::SqlitePool::connect_with(options)
+            .await
             .context(format!("Failed to connect to database at {}", db_url))?;
 
-        MIGRATOR.run(&pool).await.context("Failed to run database migrations")?;
+        MIGRATOR
+            .run(&pool)
+            .await
+            .context("Failed to run database migrations")?;
 
         Ok(pool)
     }
-
 }

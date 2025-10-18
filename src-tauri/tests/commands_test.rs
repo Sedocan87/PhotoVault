@@ -19,9 +19,17 @@ async fn test_get_config() {
     test_config.primary_drive = Some(PathBuf::from("/test/primary"));
     test_config.backup_drive = Some(PathBuf::from("/test/backup"));
 
-    config::save_config_to_path(&test_config, &config_path).await.unwrap();
+    config::save_config_to_path(&test_config, &config_path)
+        .await
+        .unwrap();
 
     let loaded_config = get_config().await.unwrap();
-    assert_eq!(loaded_config.primary_drive, Some(PathBuf::from("/test/primary")));
-    assert_eq!(loaded_config.backup_drive, Some(PathBuf::from("/test/backup")));
+    assert_eq!(
+        loaded_config.primary_drive,
+        Some(PathBuf::from("/test/primary"))
+    );
+    assert_eq!(
+        loaded_config.backup_drive,
+        Some(PathBuf::from("/test/backup"))
+    );
 }
