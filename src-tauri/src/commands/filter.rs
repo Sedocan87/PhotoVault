@@ -18,7 +18,5 @@ pub async fn search_photos_command(
     pool: State<'_, SqlitePool>,
     query: String,
 ) -> Result<Vec<Photo>, String> {
-    search_photos(&pool, query)
-        .await
-        .map_err(|e| e.to_string())
+    search_photos(&pool, query).await.map_err(|e| e.to_string())
 }

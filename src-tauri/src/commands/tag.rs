@@ -1,7 +1,7 @@
-use crate::services::tag::TagService;
 use crate::models::tag::Tag;
-use tauri::State;
+use crate::services::tag::TagService;
 use sqlx::SqlitePool;
+use tauri::State;
 
 #[tauri::command]
 pub async fn add_tag(
@@ -16,5 +16,7 @@ pub async fn add_tag(
 
 #[tauri::command]
 pub async fn get_all_tags(pool: State<'_, SqlitePool>) -> Result<Vec<Tag>, String> {
-    TagService::get_all_tags(&pool).await.map_err(|e| e.to_string())
+    TagService::get_all_tags(&pool)
+        .await
+        .map_err(|e| e.to_string())
 }

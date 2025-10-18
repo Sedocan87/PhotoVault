@@ -2,15 +2,14 @@ use crate::models::album::Album;
 use crate::models::operation::Operation;
 use crate::services::sync_engine::SyncEngine;
 use anyhow::{anyhow, Result};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use tauri::async_runtime::Mutex;
 
-pub struct AlbumService {
-    sync_engine: Arc<Mutex<Option<SyncEngine>>>,
+pub struct AlbumService<'a> {
+    sync_engine: &'a Mutex<Option<SyncEngine>>,
 }
 
-impl AlbumService {
-    pub fn new(sync_engine: Arc<Mutex<Option<SyncEngine>>>) -> Self {
+impl<'a> AlbumService<'a> {
+    pub fn new(sync_engine: &'a Mutex<Option<SyncEngine>>) -> Self {
         Self { sync_engine }
     }
 
@@ -59,7 +58,10 @@ impl AlbumService {
         }
     }
 
-    pub async fn get_photos_by_album_id(&self, album_id: i64) -> Result<Vec<crate::models::photo::Photo>> {
+    pub async fn get_photos_by_album_id(
+        &self,
+        album_id: i64,
+    ) -> Result<Vec<crate::models::photo::Photo>> {
         let sync_engine = self.sync_engine.lock().await;
         if let Some(sync_engine) = &*sync_engine {
             sync_engine.get_photos_by_album_id(album_id).await

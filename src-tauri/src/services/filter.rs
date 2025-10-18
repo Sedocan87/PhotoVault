@@ -4,10 +4,7 @@ use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 pub use crate::models::filter::FilterCriteria;
 use crate::models::photo::Photo;
 
-pub async fn filter_photos(
-    pool: &SqlitePool,
-    criteria: FilterCriteria,
-) -> Result<Vec<Photo>> {
+pub async fn filter_photos(pool: &SqlitePool, criteria: FilterCriteria) -> Result<Vec<Photo>> {
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new("SELECT p.* FROM photos p ");
 
     if let Some(tags) = &criteria.tags {

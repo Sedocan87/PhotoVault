@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { SyncQueue } from './SyncQueue';
+import React, { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { SyncQueue } from "./SyncQueue";
 
 interface SyncStatus {
   primary_connected: boolean;
@@ -15,7 +15,7 @@ const StatusBar: React.FC = () => {
 
   const fetchStatus = async () => {
     try {
-      const result = await invoke<SyncStatus>('verify_sync_status');
+      const result = await invoke<SyncStatus>("verify_sync_status");
       setStatus(result);
       setError(null);
     } catch (err) {

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Photo } from '../models/photo';
+import React from "react";
+import { Photo } from "../models/photo";
 
 interface GalleryProps {
   photos: Photo[];
@@ -7,11 +7,17 @@ interface GalleryProps {
   setSelectedPhotoIds?: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
-const Gallery: React.FC<GalleryProps> = ({ photos, selectedPhotoIds, setSelectedPhotoIds }) => {
+const Gallery: React.FC<GalleryProps> = ({
+  photos,
+  selectedPhotoIds,
+  setSelectedPhotoIds,
+}) => {
   const handlePhotoSelection = (photoId: number) => {
     if (setSelectedPhotoIds) {
       setSelectedPhotoIds((prev) =>
-        prev.includes(photoId) ? prev.filter((id) => id !== photoId) : [...prev, photoId]
+        prev.includes(photoId)
+          ? prev.filter((id) => id !== photoId)
+          : [...prev, photoId],
       );
     }
   };
@@ -22,7 +28,7 @@ const Gallery: React.FC<GalleryProps> = ({ photos, selectedPhotoIds, setSelected
         <div key={photo.id} className="relative group">
           <div
             className={`bg-gray-200 dark:bg-gray-700 aspect-square rounded-md group-hover:opacity-80 ${
-              selectedPhotoIds?.includes(photo.id) ? 'ring-2 ring-blue-500' : ''
+              selectedPhotoIds?.includes(photo.id) ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handlePhotoSelection(photo.id)}
           >

@@ -1,8 +1,8 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/core';
-import { Photo } from '../models/photo';
-import Gallery from '../components/Gallery';
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { invoke } from "@tauri-apps/api/core";
+import { Photo } from "../models/photo";
+import Gallery from "../components/Gallery";
 
 interface AlbumViewProps {
   albumId: number;
@@ -10,8 +10,8 @@ interface AlbumViewProps {
 
 export function AlbumView({ albumId }: AlbumViewProps) {
   const { data: photos, isLoading } = useQuery<Photo[]>({
-    queryKey: ['album', albumId],
-    queryFn: () => invoke('get_photos_by_album', { albumId }),
+    queryKey: ["album", albumId],
+    queryFn: () => invoke("get_photos_by_album", { albumId }),
   });
 
   if (isLoading) {

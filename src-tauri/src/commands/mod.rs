@@ -3,14 +3,17 @@ use crate::models::operation::Operation;
 use crate::services::config::{self, AppConfig, CONFIG_FILE_NAME};
 use crate::services::sync_engine::SyncEngine;
 use crate::services::sync_status::{self, SyncStatus};
+use sqlx::{Pool, Sqlite};
 use std::path::PathBuf;
-use tauri::{State, async_runtime::Mutex};
+use tauri::{async_runtime::Mutex, State};
 
 pub mod album;
-pub mod tag;
+pub mod duplicates;
 pub mod filter;
+pub mod tag;
 
 pub struct AppState {
+    pub db_pool: Mutex<Option<Pool<Sqlite>>>,
     pub sync_engine: Mutex<Option<SyncEngine>>,
 }
 
@@ -24,8 +27,6 @@ pub async fn get_config() -> CommandResult<AppConfig> {
         .await
         .map_err(|e| e.to_string())
 }
-
-
 
 #[tauri::command]
 pub async fn scan_library(state: State<'_, AppState>) -> CommandResult<()> {
@@ -43,10 +44,17 @@ pub async fn scan_library(state: State<'_, AppState>) -> CommandResult<()> {
 }
 
 #[tauri::command]
-pub async fn get_photos(limit: i64, offset: i64, state: State<'_, AppState>) -> CommandResult<Vec<crate::models::photo::Photo>> {
+pub async fn get_photos(
+    limit: i64,
+    offset: i64,
+    state: State<'_, AppState>,
+) -> CommandResult<Vec<crate::models::photo::Photo>> {
     let sync_engine = state.sync_engine.lock().await;
     if let Some(sync_engine) = &*sync_engine {
-        let photos = sync_engine.get_photos(limit, offset).await.map_err(|e| e.to_string())?;
+        let photos = sync_engine
+            .get_photos(limit, offset)
+            .await
+            .map_err(|e| e.to_string())?;
         return Ok(photos);
     }
     Ok(Vec::new())
@@ -61,10 +69,15 @@ pub async fn move_photos(
     let mut sync_engine = state.sync_engine.lock().await;
     if let Some(sync_engine) = &mut *sync_engine {
         for photo_id in photo_ids {
-            let photo = sync_engine.get_photo_by_id(photo_id).await.map_err(|e| e.to_string())?;
+            let photo = sync_engine
+                .get_photo_by_id(photo_id)
+                .await
+                .map_err(|e| e.to_string())?;
             let from = PathBuf::from(&photo.path);
             let to = PathBuf::from(&target_path).join(from.file_name().unwrap());
-            tokio::fs::rename(&from, &to).await.map_err(|e| e.to_string())?;
+            tokio::fs::rename(&from, &to)
+                .await
+                .map_err(|e| e.to_string())?;
             let op = Operation::Move { from, to };
             sync_engine
                 .execute_operation(&op)
@@ -101,11 +114,19 @@ pub async fn rename_photo(
 ) -> CommandResult<()> {
     let mut sync_engine = state.sync_engine.lock().await;
     if let Some(sync_engine) = &mut *sync_engine {
-        let photo = sync_engine.get_photo_by_id(photo_id).await.map_err(|e| e.to_string())?;
+        let photo = sync_engine
+            .get_photo_by_id(photo_id)
+            .await
+            .map_err(|e| e.to_string())?;
         let from = PathBuf::from(&photo.path);
         let to = from.with_file_name(&new_name);
-        tokio::fs::rename(&from, &to).await.map_err(|e| e.to_string())?;
-        let op = Operation::Rename { path: from, new_name };
+        tokio::fs::rename(&from, &to)
+            .await
+            .map_err(|e| e.to_string())?;
+        let op = Operation::Rename {
+            path: from,
+            new_name,
+        };
         sync_engine
             .execute_operation(&op)
             .await
@@ -119,9 +140,14 @@ pub async fn delete_photos(photo_ids: Vec<i64>, state: State<'_, AppState>) -> C
     let mut sync_engine = state.sync_engine.lock().await;
     if let Some(sync_engine) = &mut *sync_engine {
         for photo_id in photo_ids {
-            let photo = sync_engine.get_photo_by_id(photo_id).await.map_err(|e| e.to_string())?;
+            let photo = sync_engine
+                .get_photo_by_id(photo_id)
+                .await
+                .map_err(|e| e.to_string())?;
             let path = PathBuf::from(&photo.path);
-            tokio::fs::remove_file(&path).await.map_err(|e| e.to_string())?;
+            tokio::fs::remove_file(&path)
+                .await
+                .map_err(|e| e.to_string())?;
             let op = Operation::Delete { path };
             sync_engine
                 .execute_operation(&op)
@@ -178,11 +204,14 @@ pub async fn set_drive_paths(
         .map_err(|e| e.to_string())?;
     println!("[set_drive_paths] Backup pool created.");
 
-    let engine = SyncEngine::new(primary_pool, Some(backup_pool));
+    let engine = SyncEngine::new(primary_pool.clone(), Some(backup_pool));
     println!("[set_drive_paths] SyncEngine created.");
 
-    let mut sync_engine = state.sync_engine.lock().await;
-    *sync_engine = Some(engine);
+    let mut sync_engine_state = state.sync_engine.lock().await;
+    *sync_engine_state = Some(engine);
+
+    let mut db_pool_state = state.db_pool.lock().await;
+    *db_pool_state = Some(primary_pool);
 
     Ok(())
 }

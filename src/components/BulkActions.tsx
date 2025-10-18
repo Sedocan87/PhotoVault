@@ -1,7 +1,7 @@
-import React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoke } from '@tauri-apps/api/core';
-import { Button } from './ui/button';
+import React from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { invoke } from "@tauri-apps/api/core";
+import { Button } from "./ui/button";
 
 interface BulkActionsProps {
   selectedPhotoIds: number[];
@@ -10,20 +10,30 @@ interface BulkActionsProps {
 
 export function BulkActions({ selectedPhotoIds, albums }: BulkActionsProps) {
   const queryClient = useQueryClient();
-  const [selectedAlbumId, setSelectedAlbumId] = React.useState<number | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = React.useState<number | null>(
+    null,
+  );
 
   const addToAlbumMutation = useMutation({
-    mutationFn: ({ photoIds, albumId }: { photoIds: number[]; albumId: number }) =>
-      invoke('add_photos_to_album', { photoIds, albumId }),
+    mutationFn: ({
+      photoIds,
+      albumId,
+    }: {
+      photoIds: number[];
+      albumId: number;
+    }) => invoke("add_photos_to_album", { photoIds, albumId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photos'] });
-      queryClient.invalidateQueries({ queryKey: ['albums'] });
+      queryClient.invalidateQueries({ queryKey: ["photos"] });
+      queryClient.invalidateQueries({ queryKey: ["albums"] });
     },
   });
 
   const handleAddToAlbum = () => {
     if (selectedAlbumId && selectedPhotoIds.length > 0) {
-      addToAlbumMutation.mutate({ photoIds: selectedPhotoIds, albumId: selectedAlbumId });
+      addToAlbumMutation.mutate({
+        photoIds: selectedPhotoIds,
+        albumId: selectedAlbumId,
+      });
     }
   };
 
@@ -49,8 +59,11 @@ export function BulkActions({ selectedPhotoIds, albums }: BulkActionsProps) {
             </option>
           ))}
         </select>
-        <Button onClick={handleAddToAlbum} disabled={!selectedAlbumId || addToAlbumMutation.isPending}>
-          {addToAlbumMutation.isPending ? 'Adding...' : 'Add to Album'}
+        <Button
+          onClick={handleAddToAlbum}
+          disabled={!selectedAlbumId || addToAlbumMutation.isPending}
+        >
+          {addToAlbumMutation.isPending ? "Adding..." : "Add to Album"}
         </Button>
       </div>
     </div>
