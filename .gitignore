@@ -8,6 +8,8 @@
 /src-tauri/Cargo.lock
 /src-tauri/.sqlx
 /src-tauri/gen
+/src-tauri/.env
+/src-tauri/*.db
 
 # IDE
 /.idea
