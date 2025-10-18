@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use tauri::{State, async_runtime::Mutex};
 
 pub mod album;
+pub mod tag;
+pub mod filter;
 
 pub struct AppState {
     pub sync_engine: Mutex<Option<SyncEngine>>,
@@ -24,15 +26,6 @@ pub async fn get_config() -> CommandResult<AppConfig> {
 }
 
 
-#[tauri::command]
-pub async fn add_tag(photo_id: i64, tag_name: String, state: State<'_, AppState>) -> CommandResult<()> {
-    let mut sync_engine = state.sync_engine.lock().await;
-    if let Some(sync_engine) = &mut *sync_engine {
-        let op = Operation::AddTag { photo_id, tag_name };
-        sync_engine.execute_operation(&op).await.map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
 
 #[tauri::command]
 pub async fn scan_library(state: State<'_, AppState>) -> CommandResult<()> {

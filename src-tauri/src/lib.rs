@@ -4,10 +4,12 @@ pub mod models;
 pub mod services;
 
 use commands::{
-    add_tag, delete_photos, get_config, get_photos, get_sync_queue_status, move_photos,
+    delete_photos, get_config, get_photos, get_sync_queue_status, move_photos,
     rename_photo, scan_library, set_drive_paths, verify_sync_status,
 };
 use commands::album::{create_album, get_albums, add_photos_to_album, delete_album, get_photos_by_album};
+use commands::tag::{add_tag, get_all_tags};
+use commands::filter::{filter_photos_command, search_photos_command};
 use db::manager::DatabaseManager;
 use services::config::{self, CONFIG_FILE_NAME};
 use tauri::{async_runtime::Mutex, Manager};
@@ -52,6 +54,9 @@ pub fn run() {
             delete_album,
             get_photos_by_album,
             add_tag,
+            get_all_tags,
+            filter_photos_command,
+            search_photos_command,
         ])
         .setup(move |app| {
             let handle = app.handle();
